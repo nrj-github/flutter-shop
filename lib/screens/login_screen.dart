@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart'; // Create this after login
-import 'register_screen.dart'; // Navigation to signup
+import '../services/auth_service.dart';
+import '../utils/constants.dart';
+import 'home_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,16 +16,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
+        await _authService.login(
+            _emailController.text,
+            _passwordController.text
         );
+
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -32,7 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Authentication Failed")),
+          SnackBar(
+            content: Text(e.message ?? "Authentication Failed"),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -41,35 +51,43 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.paddingLarge,
+              vertical: 40.0
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
-                // Logo or Brand Name
                 const Text(
                   "Borobazar",
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF02B290),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 10),
                 const Text(
                   "Sign in to your account to continue",
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  style: TextStyle(fontSize: 16, color: AppColors.textLight),
                 ),
                 const SizedBox(height: 40),
 
-                // Email Field
                 const Text(
                   "Email Address",
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -108,16 +126,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {}, // Optional for test
+                    onPressed: () {},
                     child: const Text(
                       "Forgot Password?",
-                      style: TextStyle(color: Color(0xFF02B290)),
+                      style: TextStyle(color: AppColors.primary),
                     ),
                   ),
                 ),
                 const SizedBox(height: 30),
 
-                // Login Button
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
@@ -130,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 24),
 
-                // Footer
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -145,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text(
                         "Register",
                         style: TextStyle(
-                          color: Color(0xFF02B290),
+                          color: AppColors.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

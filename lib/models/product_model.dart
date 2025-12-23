@@ -20,10 +20,8 @@ class Product {
       id: documentId,
       name: data['name'] ?? '',
       description: data['description'] ?? '',
-      // Ensures price is always a double even if stored as an int in Firebase
       price: (data['price'] ?? 0).toDouble(),
       imageUrl: data['image_url'] ?? '',
-      // This handles missing created_at fields safely
       createdAt: data['created_at'] != null
           ? (data['created_at'] is String
           ? DateTime.tryParse(data['created_at'])

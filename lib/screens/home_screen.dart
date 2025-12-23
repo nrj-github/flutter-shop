@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
+import '../services/database_service.dart';
 import '../widgets/product_card.dart';
 import '../utils/constants.dart';
 import 'cart_screen.dart';
@@ -13,11 +13,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final DatabaseService _dbService = DatabaseService();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Borobazar"),
         actions: [
-          // Cart Icon with Badge
           Stack(
             alignment: Alignment.center,
             children: [
@@ -63,11 +65,8 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        // FIXED: Removed .orderBy to ensure the "Apple" (missing created_at) is shown
-        stream: FirebaseFirestore.instance
-            .collection('products')
-            .snapshots(),
+      body: StreamBuilder<List<Product>>(
+        stream: _dbService.getProducts(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text("Error fetching products"));
@@ -75,9 +74,8 @@ class HomeScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
-          final docs = snapshot.data!.docs;
-          if (docs.isEmpty) {
+          final products = snapshot.data ?? [];
+          if (products.isEmpty) {
             return const Center(
               child: Text(
                 "No products found.\nClick + to add some!",
@@ -86,7 +84,6 @@ class HomeScreen extends StatelessWidget {
               ),
             );
           }
-
           return GridView.builder(
             padding: const EdgeInsets.all(AppSpacing.paddingMedium),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -95,13 +92,9 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
-            itemCount: docs.length,
+            itemCount: products.length,
             itemBuilder: (context, index) {
-              final product = Product.fromMap(
-                docs[index].data() as Map<String, dynamic>,
-                docs[index].id,
-              );
-              return ProductCard(product: product);
+              return ProductCard(product: products[index]);
             },
           );
         },

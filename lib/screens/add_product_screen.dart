@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import '../services/database_service.dart';
 import '../utils/constants.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -11,11 +12,12 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for the form fields
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _descController = TextEditingController();
   final _imageController = TextEditingController();
+
+  final DatabaseService _dbService = DatabaseService();
 
   bool _isLoading = false;
 
@@ -24,32 +26,48 @@ class _AddProductScreenState extends State<AddProductScreen> {
       setState(() => _isLoading = true);
 
       try {
-        // Requirement: Add Product to Backend (Firebase Firestore)
-        await FirebaseFirestore.instance.collection('products').add({
+        final productData = {
           'name': _nameController.text.trim(),
           'price': double.parse(_priceController.text.trim()),
           'description': _descController.text.trim(),
           'image_url': _imageController.text.trim(),
-          'created_at': FieldValue.serverTimestamp(), // For the orderBy logic in HomeScreen
-        });
+        };
+
+        await _dbService.addProduct(productData);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Product added successfully!"),
               backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
             ),
           );
-          Navigator.pop(context); // Go back to Home
+          Navigator.pop(context);
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: AppColors.error),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error: ${e.toString()}"),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _descController.dispose();
+    _imageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,8 +83,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Product Name", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Product Name"),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(hintText: "e.g. Fresh Organic Apples"),
@@ -74,27 +91,28 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 20),
 
-              const Text("Price (\$)", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Price (\$)"),
               TextFormField(
                 controller: _priceController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(hintText: "e.g. 12.50"),
-                validator: (val) => val!.isEmpty ? "Enter price" : null,
+                validator: (val) {
+                  if (val!.isEmpty) return "Enter price";
+                  if (double.tryParse(val) == null) return "Enter a valid number";
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
 
-              const Text("Image URL", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Image URL"),
               TextFormField(
                 controller: _imageController,
-                decoration: const InputDecoration(hintText: "Paste image link here"),
+                decoration: const InputDecoration(hintText: "Paste high-quality image link"),
                 validator: (val) => val!.isEmpty ? "Enter image URL" : null,
               ),
               const SizedBox(height: 20),
 
-              const Text("Description", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Description"),
               TextFormField(
                 controller: _descController,
                 maxLines: 3,
@@ -116,12 +134,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _descController.dispose();
-    _imageController.dispose();
-    super.dispose();
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
+    );
   }
 }

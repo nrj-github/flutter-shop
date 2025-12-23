@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
-import '../models/cart_item_model.dart'; // Ensure this model has the copyWith method
+import '../models/cart_item_model.dart';
 
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};

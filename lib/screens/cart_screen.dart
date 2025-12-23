@@ -28,7 +28,6 @@ class CartScreen extends StatelessWidget {
                 final productId = cart.items.keys.toList()[index];
 
                 return Container(
-                  // FIXED: Changed from .bottom to .only
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -38,7 +37,6 @@ class CartScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Product Image
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
@@ -56,7 +54,6 @@ class CartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
 
-                      // Product Details
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +74,6 @@ class CartScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Quantity Controls
                       Row(
                         children: [
                           _qtyButton(Icons.remove,
@@ -94,7 +90,6 @@ class CartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
 
-                      // Delete Action
                       IconButton(
                         icon: const Icon(Icons.delete_outline,
                             color: AppColors.error),
@@ -173,7 +168,6 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
-              // Add Checkout success message/logic here
             },
             child: const Text("Proceed to Checkout"),
           ),

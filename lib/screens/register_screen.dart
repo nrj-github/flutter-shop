@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart'; // Import the service
 import '../utils/constants.dart';
 import 'home_screen.dart';
 
@@ -15,19 +16,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // Instantiate the Auth Service
+  final AuthService _authService = AuthService();
+
   bool _isLoading = false;
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        // Firebase Registration
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
+        await _authService.register(
+            _emailController.text,
+            _passwordController.text
         );
-
-        // Success: Go to Home
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -36,9 +38,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         }
       } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Registration Failed"), backgroundColor: AppColors.error),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message ?? "Registration Failed"),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -46,10 +54,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white, iconTheme: const IconThemeData(color: Colors.black)),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textDark),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.paddingLarge),
         child: Form(
@@ -57,13 +77,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Create Account", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const Text(
+                  "Create Account",
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark)
+              ),
               const SizedBox(height: 8),
-              const Text("Register to start shopping"),
+              const Text("Register to start shopping your favorite products"),
               const SizedBox(height: 32),
 
-              const Text("Full Name", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Full Name"),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(hintText: "Enter your name"),
@@ -71,17 +93,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 20),
 
-              const Text("Email Address", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Email Address"),
               TextFormField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(hintText: "Enter your email"),
                 validator: (val) => val!.contains("@") ? null : "Enter valid email",
               ),
               const SizedBox(height: 20),
 
-              const Text("Password", style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
+              _buildLabel("Password"),
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -99,6 +120,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textDark),
       ),
     );
   }
