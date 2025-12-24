@@ -25,52 +25,51 @@ class ProductCard extends StatelessWidget {
         );
       },
       child: Container(
+        // Shadow removed here
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(color: AppColors.border.withOpacity(0.5)), // Added a light border since shadow is gone
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 1. Image Section
             Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  product.imageUrl.trim(),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[100],
-                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    product.imageUrl.trim(),
+                    fit: BoxFit.contain, // Keeps full image visible
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[100],
+                      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Colors.grey[50],
+                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      );
+                    },
                   ),
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: Colors.grey[50],
-                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    );
-                  },
                 ),
               ),
             ),
 
             // 2. Product Details
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product.name,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
@@ -78,7 +77,7 @@ class ProductCard extends StatelessWidget {
                       color: AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -94,7 +93,6 @@ class ProductCard extends StatelessWidget {
                       // 3. Add to Cart Button
                       GestureDetector(
                         onTap: () {
-                          // Prevents the "onTap" of the card from triggering when clicking the button
                           context.read<CartProvider>().addItem(product);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -106,7 +104,7 @@ class ProductCard extends StatelessWidget {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(8),
