@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/product_card.dart';
 import '../utils/constants.dart';
 import 'cart_screen.dart';
+import 'login_screen.dart';
 import 'add_product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final DatabaseService _dbService = DatabaseService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -39,6 +42,18 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text("Borobazar"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, size: 22),
+            onPressed: () async {
+              await _authService.logout();
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              }
+            },
+          ),
           Stack(
             alignment: Alignment.center,
             children: [
