@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import '../services/database_service.dart';
 import '../utils/constants.dart';
 
 class CartScreen extends StatelessWidget {
@@ -9,6 +10,7 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
+    final DatabaseService dbService = DatabaseService();
 
     return Scaffold(
       appBar: AppBar(
@@ -53,7 +55,6 @@ class CartScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +62,8 @@ class CartScreen extends StatelessWidget {
                             Text(
                               item.product.name,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -76,24 +78,37 @@ class CartScreen extends StatelessWidget {
 
                       Row(
                         children: [
-                          _qtyButton(Icons.remove,
-                                  () => cart.updateQuantity(productId, false)),
+                          _qtyButton(Icons.remove, () {
+                            cart.updateQuantity(productId, false);
+                            if (cart.items.containsKey(productId)) {
+                              dbService.addToFirestoreCart(
+                                  cart.items[productId]!);
+                            } else {
+                              dbService.removeFromFirestoreCart(productId);
+                            }
+                          }),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10),
                             child: Text("${item.quantity}",
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold)),
                           ),
-                          _qtyButton(Icons.add,
-                                  () => cart.updateQuantity(productId, true)),
+                          _qtyButton(Icons.add, () {
+                            cart.updateQuantity(productId, true);
+                            dbService.addToFirestoreCart(
+                                cart.items[productId]!);
+                          }),
                         ],
                       ),
                       const SizedBox(width: 8),
-
                       IconButton(
                         icon: const Icon(Icons.delete_outline,
                             color: AppColors.error),
-                        onPressed: () => cart.removeItem(productId),
+                        onPressed: () {
+                          cart.removeItem(productId);
+                          dbService.removeFromFirestoreCart(productId);
+                        },
                       )
                     ],
                   ),
@@ -149,29 +164,32 @@ class CartScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Total Amount",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(
-                "\$${cart.totalAmount.toStringAsFixed(2)}",
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-            },
-            child: const Text("Proceed to Checkout"),
-          ),
-        ],
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Total Amount",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  "\$${cart.totalAmount.toStringAsFixed(2)}",
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+              },
+              child: const Text("Proceed to Checkout"),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -8,14 +8,33 @@ import '../utils/constants.dart';
 import 'cart_screen.dart';
 import 'add_product_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final DatabaseService _dbService = DatabaseService();
+
+  @override
+  void initState() {
+    super.initState();
+    _syncCartFromFirebase();
+  }
+
+  Future<void> _syncCartFromFirebase() async {
+    Future.microtask(() async {
+      final remoteCart = await _dbService.getCartItems();
+      if (remoteCart.isNotEmpty && mounted) {
+        context.read<CartProvider>().setInventory(remoteCart);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-
-    final DatabaseService _dbService = DatabaseService();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Borobazar"),
@@ -72,7 +91,9 @@ class HomeScreen extends StatelessWidget {
             return const Center(child: Text("Error fetching products"));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
           }
           final products = snapshot.data ?? [];
           if (products.isEmpty) {

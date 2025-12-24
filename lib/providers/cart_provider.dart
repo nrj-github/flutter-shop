@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import '../models/product_model.dart';
+import 'package:flutter/material.dart';import '../models/product_model.dart';
 import '../models/cart_item_model.dart';
 
 class CartProvider with ChangeNotifier {
-  final Map<String, CartItem> _items = {};
+
+  Map<String, CartItem> _items = {};
 
   Map<String, CartItem> get items => {..._items};
 
@@ -15,6 +15,11 @@ class CartProvider with ChangeNotifier {
       total += cartItem.product.price * cartItem.quantity;
     });
     return total;
+  }
+
+  void setInventory(Map<String, CartItem> fetchedItems) {
+    _items = fetchedItems;
+    notifyListeners();
   }
 
   void addItem(Product product) {
